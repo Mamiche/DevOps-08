@@ -1,0 +1,7 @@
+apiVersion: v2
+name: spring-boot-app
+description: Chart Helm pour deploiement app spring boot
+type: application
+version: 0.1.0
+appVersion: "1.0"
+

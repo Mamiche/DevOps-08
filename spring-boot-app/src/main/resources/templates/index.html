@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"/>
+    <link data-th-href="@{/css/main.css?{id}(id=${timestamp})}" rel="stylesheet">
+    <title>Masterclass CI/CD par Mamiche A.</title>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+    <a class="navbar-brand" href="#">Pipeline CI/CD ultime avec Java</a>
+</nav>
+
+<main role="main" class="container">
+    <div class="starter-template">
+        <!-- Affiche le titre depuis le modèle Spring -->
+        <h1 th:text="${title}">Titre par défaut.</h1>
+        <!-- Affiche le message depuis le modèle Spring -->
+        <p th:text="${msg}">Texte par défaut.</p>
+    </div>
+</main>
+
+<script data-th-src="@{/js/main.js}"></script>
+</body>
+</html>

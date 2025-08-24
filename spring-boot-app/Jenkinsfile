@@ -1,0 +1,107 @@
+pipeline {
+    agent {
+        kubernetes {
+            cloud 'MiniKube'
+            yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: maven
+    image: maven:3.9.5-eclipse-temurin-17
+    command: ['cat']
+    tty: true
+  - name: buildah
+    image: quay.io/buildah/stable:v1.40.1
+    securityContext:
+      privileged: true
+    command: ["sleep"]
+    args: ["infinity"]
+"""
+        }
+    }
+
+    environment {
+        DOCKER_IMAGE = "mamiche/mon-app:${BUILD_NUMBER}"
+        SONAR_URL = "http://192.168.49.2:32001"
+    }
+
+    stages {
+
+        stage('Build & Test') {
+            steps {
+                container('maven') {
+                    dir('spring-boot-app') {
+                        sh 'mvn clean package -DskipTests'
+                    }
+                }
+            }
+        }
+
+        stage('Static Code Analysis') {
+            when {
+                expression { return env.SONAR_URL != null }
+            }
+            steps {
+                withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
+                    container('maven') {
+                        dir('spring-boot-app') {
+                            sh 'mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Build & Push Docker') {
+            steps {
+                container('buildah') {
+                    withCredentials([usernamePassword(credentialsId: 'docker-creds', 
+                                                      usernameVariable: 'DOCKER_USERNAME', 
+                                                      passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh '''
+                        # Construire l'image
+                        buildah bud --format=docker -t ${DOCKER_IMAGE} spring-boot-app/
+                        
+                        # Login DockerHub
+                        buildah login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD docker.io
+                        
+                        # Push
+                        buildah push ${DOCKER_IMAGE}
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Update Helm Values') {
+            environment {
+                GIT_REPO_NAME = "DevOps-08"
+                GIT_USER_NAME = "Mamiche"
+            }
+            steps {
+                withCredentials([string(credentialsId: 'github_token', variable: 'GITHUB_TOKEN')]) {
+                    sh '''
+                        git config user.email "aithammou.mamiche@gmail.com"
+                        git config user.name "Mamiche"
+
+                        # Mettre à jour le tag de version dans values.yaml
+                        sed -i 's/^[[:space:]]*tag:.*/  tag: "${BUILD_NUMBER}"/' k8s/helm/values.yaml
+
+                        git add k8s/helm/values.yaml
+
+                        # Commit seulement si modifications
+                        if git diff --cached --quiet; then
+                            echo "No change in values.yaml"
+                        else
+                            git commit -m "Update Helm image tag to ${BUILD_NUMBER}"
+                        fi
+
+                        git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:main
+                    '''
+                }
+            }
+        }
+
+    }
+}

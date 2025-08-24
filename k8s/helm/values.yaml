@@ -1,0 +1,15 @@
+replicaCount: 1
+namespace: default
+image:
+  repository: mamiche/mon-app
+  tag: "${BUILD_NUMBER}"
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  port: 80
+  targetPort: 8080
+  nodePort: 31057   # optionnel : laisse vide pour que K8s choisisse
+
+resources: {}
+

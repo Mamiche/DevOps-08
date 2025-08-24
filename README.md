@@ -14,7 +14,8 @@ Voici les étapes détaillées pour mettre en place un **pipeline Jenkins de bou
 - Serveur Argo CD dans k8s
 
 **Étapes :**
-1. Installer Minikube et les serveurs Jenkins :
+1. Installer Minikube et les serveurs Jenkins, Sonar et Argo cD:
+ 
    1.1 Start MiniKube (Minikube configure automatiquement kubectl pour pointer vers ton cluster local) 
    ```
    minikube start --driver=docker
@@ -33,17 +34,17 @@ Voici les étapes détaillées pour mettre en place un **pipeline Jenkins de bou
    kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.5.8/manifests/install.yaml
    ```   
    
-2. Installer les plugins Jenkins nécessaires :
+3. Installer les plugins Jenkins nécessaires :
    2.1 Plugin Git  
    2.2 Plugin Pipeline  
    2.3 Plugin Kubernetes Continuous Deploy  
    2.4 Configurer les differents credentials ( Sonar, git, DockerHub)
 
-3. Créer un nouveau pipeline Jenkins :  
+4. Créer un nouveau pipeline Jenkins :  
    3.1 Dans Jenkins, créer un nouveau job pipeline multibranche et le configurer avec l’URL du dépôt Git de l’application Java.  
    3.2 Ajouter un `Jenkinsfile` au dépôt Git pour définir les étapes du pipeline.  
 
-4. Définir les étapes du pipeline :  
+5. Définir les étapes du pipeline :  
    - **Étape 1 :** Récupérer le code source depuis Git.  
    - **Étape 2 :** Construire l’application Java avec Maven.  
    - **Étape 3 :** Exécuter les tests unitaires avec JUnit et Mockito.  
@@ -52,7 +53,7 @@ Voici les étapes détaillées pour mettre en place un **pipeline Jenkins de bou
    - **Étape 6 :** Déployer l’application dans DockerHub.  
    - **Étape 7 :** Promouvoir l’application en production avec Argo CD.  
 
-5. Configurer les étapes du pipeline Jenkins :  
+6. Configurer les étapes du pipeline Jenkins :  
    - **Étape 1 :** Utiliser le plugin Git pour récupérer le code source.  
    - **Étape 2 :** Utiliser un agent kubernetes pour demarrer un pod avec maven et buildah 
    - **Étape 3 :** Utiliser les plugins JUnit et Mockito pour exécuter les tests unitaires.  
@@ -61,7 +62,7 @@ Voici les étapes détaillées pour mettre en place un **pipeline Jenkins de bou
    - **Étape 6 :** Utiliser le serveur Buildah deployer dans DockerHub
    - **Étape 7 :** Utiliser Argo CD pour déployer en production.  
 
-6. Mettre en place Argo CD :  
+7. Mettre en place Argo CD :  
    - Installer Argo CD sur le cluster Kubernetes.  
    - Configurer un dépôt Git pour qu’Argo CD suive les changements des charts Helm et des manifests Kubernetes.  
    - Créer un chart Helm pour l’application Java incluant les manifests Kubernetes et les valeurs Helm 
